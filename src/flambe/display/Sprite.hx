@@ -14,12 +14,14 @@ import flambe.math.Rectangle;
 import flambe.scene.Director;
 import flambe.util.Signal1;
 import flambe.util.Value;
-
+import flambe.Component;
 using flambe.util.BitSets;
-using flambe.YSort;
+
 
 class Sprite extends Component
 {
+	public var userName:String;
+	public var sort:Bool;
     /**
      * X position, in pixels.
      */
@@ -119,6 +121,7 @@ class Sprite extends Component
         anchorY = new AnimatedFloat(0, dirtyMatrix);
 
         alpha = new AnimatedFloat(1);
+		sort = true;
     }
 
     /**
