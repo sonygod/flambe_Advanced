@@ -8,7 +8,6 @@ import flambe.input.PointerEvent;
 import flambe.math.Rectangle;
 import flambe.System;
 import flambe.math.Point;
-import flambe.input.MouseEvent;
 /**
  * camera for game 
  * @author sonygod

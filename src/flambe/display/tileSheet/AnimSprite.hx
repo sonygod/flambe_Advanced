@@ -1,15 +1,11 @@
 package flambe.display.tileSheet;
-
 import flambe.display.Texture;
-
 import flambe.display.Sprite;
-
 import flambe.display.tileSheet.Format;
 import flambe.display.Graphics;
 import flambe.util.Signal1;
 import flambe.Disposer;
 using flambe.YSort;
-
 // =============================  Created by: Amos Laber, Dec 2, 2011
 //
 // AnimSprite is a class to diplay an animated sprite sheet
@@ -22,13 +18,11 @@ class AnimSprite extends Sprite {
     public var numSequences(get, never):Int;
     public var seqFrame(get, never):Int;
     public var frame(get, set):Int;
-	
-	public var updateSinal:Signal1<Float>;
-	public var disposer:Disposer;
-
+    public var updateSinal:Signal1<Float>;
+    public var disposer:Disposer;
     var mAnimSheet:AnimTextureSheet;
     var mSequences:Array<AnimSeqData>;
-   public var curAnim(default,null):AnimSeqData;
+    public var curAnim(default, null):AnimSeqData;
 // current sequence
     var dirty:Bool;
     var donePlaying:Bool;
@@ -42,33 +36,23 @@ class AnimSprite extends Sprite {
     static public inline var RIGHT:Int = 2;
 
     public function new(texture:Texture) {
-
         super();
         fakeElapsed = 0.0167;
-
         frameTimer = 0;
         mSequences = [];
-
-
         this.texture = texture;
-
-updateSinal = new Signal1<Float>();
-disposer = new Disposer();
+        updateSinal = new Signal1<Float>();
+        disposer = new Disposer();
     }
-
 
     public function initialize(sheet:AnimTextureSheet):Void {
         if (sheet == null)
             return;
         mAnimSheet = sheet;
-
         curAnim = null;
         this.frame = 0;
         drawFrame(true);
-
-
     }
-
 
     public function isPlaying(index:Int = 0):Bool {
         return !donePlaying;
@@ -99,7 +83,6 @@ disposer = new Disposer();
         if (curAnim != null)
             curIndex = curAnim.arFrames[curFrame]
         else curIndex = val;
-
         dirty = true;
         return val;
     }
@@ -133,9 +116,7 @@ disposer = new Disposer();
         return null;
     }
 
-
     public function play(name:String = null):Void {
-
         if (name == null) {
             donePlaying = false;
             dirty = true;
@@ -151,32 +132,26 @@ disposer = new Disposer();
             trace("play: cannot find sequence: " + name);
             return;
         }
-
         curIndex = curAnim.arFrames[0];
         donePlaying = false;
         dirty = true;
-
         if (curAnim.arFrames.length == 1)
             donePlaying = true;
     }
 
-
     public function stop():Void {
         donePlaying = true;
     }
-
 
     public function frameAdvance(next:Bool):Void {
         if (next) {
             if (Std.int(curFrame) < curAnim.arFrames.length - 1)
                 ++curFrame;
         }
-
         else {
             if (curFrame > 0)
                 --curFrame;
         }
-
         curIndex = curAnim.arFrames[curFrame];
         dirty = true;
     }
@@ -185,17 +160,12 @@ disposer = new Disposer();
         if (force || dirty)
             drawFrameInternal();
     }
-
-
     var fakeElapsed:Float;
 
     override public function onUpdate(dt:Float) {
-
         super.onUpdate(dt);
-
         updateAnimation();
-
-       updateSinal.emit(dt);
+        updateSinal.emit(dt);
     }
 
     override public function isOutScreen():Bool {
@@ -206,18 +176,15 @@ disposer = new Disposer();
         if (isOutScreen())
             return;
         if (curAnim != null && curAnim.delay > 0 && !donePlaying) {
-
             frameTimer += fakeElapsed;
             while (frameTimer > curAnim.delay) {
                 frameTimer = frameTimer - curAnim.delay;
                 advanceFrame();
             }
-
         }
         if (dirty)
             drawFrameInternal();
     }
-
 
     function advanceFrame():Void {
         if (Std.int(curFrame) == curAnim.arFrames.length - 1) {
@@ -225,38 +192,27 @@ disposer = new Disposer();
                 curFrame = 0
             else donePlaying = true;
         }
-
         else ++curFrame;
         curIndex = curAnim.arFrames[curFrame];
         dirty = true;
     }
-
 // Internal function to update the current animation frame
-
     var needDraw:Bool = false;
 
     function drawFrameInternal():Void {
         dirty = false;
 // needDraw=true;
 //  trace(curIndex);
-
         anchorY._ = getNaturalHeight();
     }
-
-
     public var texture:Texture;
 
     override public function draw(ctx:Graphics) {
 //  var frame:FrameData=mAnimSheet.getFrameData(curIndex);
-
         if (isOutScreen())
             return;
-
         var data:FrameData = mAnimSheet.getFrameData(curIndex);
-
-
         ctx.drawSubImage(texture, data.offX, data.offY, data.x, data.y, data.w, data.h) ;
-
     }
 
     override public function getNaturalWidth():Float {
@@ -266,6 +222,5 @@ disposer = new Disposer();
     override public function getNaturalHeight():Float {
         return mAnimSheet.get_frameHeight(curIndex);
     }
-
 }
 

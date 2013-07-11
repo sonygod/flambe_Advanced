@@ -1,9 +1,7 @@
 //
 // Flambe - Rapid game development
 // https://github.com/aduros/flambe/blob/master/LICENSE.txt
-
 package flambe.display;
-
 import flambe.animation.AnimatedFloat;
 import flambe.display.Sprite;
 import flambe.input.PointerEvent;
@@ -13,63 +11,50 @@ import flambe.math.Point;
 import flambe.math.Rectangle;
 import flambe.scene.Director;
 import flambe.util.Signal1;
-import flambe.util.Value;
 import flambe.Component;
 using flambe.util.BitSets;
-
-
-class Sprite extends Component
-{
-	public var userName:String;
-	public var sort:Bool;
-    /**
+class Sprite extends Component {
+    public var userName:String;
+    public var sort:Bool;
+/**
      * X position, in pixels.
      */
-    public var x (default, null) :AnimatedFloat;
-
-    /**
+    public var x (default, null):AnimatedFloat;
+/**
      * Y position, in pixels.
      */
-    public var y (default, null) :AnimatedFloat;
-
-    /**
+    public var y (default, null):AnimatedFloat;
+/**
      * Rotation angle, in degrees.
      */
-    public var rotation (default, null) :AnimatedFloat;
-
-    /**
+    public var rotation (default, null):AnimatedFloat;
+/**
      * Horizontal scale factor.
      */
-    public var scaleX (default, null) :AnimatedFloat;
-
-    /**
+    public var scaleX (default, null):AnimatedFloat;
+/**
      * Vertical scale factor.
      */
-    public var scaleY (default, null) :AnimatedFloat;
-
-    /**
+    public var scaleY (default, null):AnimatedFloat;
+/**
      * The X position of this sprite's anchor point. Local transformations are applied relative to
      * this point.
      */
-    public var anchorX (default, null) :AnimatedFloat;
-
-    /**
+    public var anchorX (default, null):AnimatedFloat;
+/**
      * The Y position of this sprite's anchor point. Local transformations are applied relative to
      * this point.
      */
-    public var anchorY (default, null) :AnimatedFloat;
-
-    /**
+    public var anchorY (default, null):AnimatedFloat;
+/**
      * The alpha (opacity) of this sprite, between 0 (invisible) and 1 (fully opaque).
      */
-    public var alpha (default, null) :AnimatedFloat;
-
-    /**
+    public var alpha (default, null):AnimatedFloat;
+/**
      * The blend mode used to draw this sprite, or null to use its parent's blend mode.
      */
-    public var blendMode :BlendMode = null;
-
-    /**
+    public var blendMode:BlendMode = null;
+/**
      * <p>The scissor rectangle used for clipping/masking, in the local coordinate system. The
      * scissor rectangle affects both rendering and hit testing, and applies to this sprite and all
      * children.</p>
@@ -77,39 +62,32 @@ class Sprite extends Component
      * <p><b>WARNING</b>: When using scissor testing, this sprite (and its parents) must not be
      * rotated. The scissor rectangle must be axis-aligned when converted to screen coordinates.</p>
      */
-    public var scissor :Rectangle = null;
-
-    /**
+    public var scissor:Rectangle = null;
+/**
      * Whether this sprite should be drawn.
      */
-    public var visible (get, set) :Bool;
-
-    /**
+    public var visible (get, set):Bool;
+/**
      * Emitted when the pointer is pressed down over this sprite.
      */
-    public var pointerDown (get, null) :Signal1<PointerEvent>;
-
-    /**
+    public var pointerDown (get, null):Signal1<PointerEvent>;
+/**
      * Emitted when the pointer is moved over this sprite.
      */
-    public var pointerMove (get, null) :Signal1<PointerEvent>;
-
-    /**
+    public var pointerMove (get, null):Signal1<PointerEvent>;
+/**
      * Emitted when the pointer is raised over this sprite.
      */
-    public var pointerUp (get, null) :Signal1<PointerEvent>;
-
-    /**
+    public var pointerUp (get, null):Signal1<PointerEvent>;
+/**
      * Whether this sprite or any children should receive pointer events. Defaults to true.
      */
-    public var pointerEnabled (get, set) :Bool;
+    public var pointerEnabled (get, set):Bool;
 
-    public function new ()
-    {
+    public function new() {
         _flags = VISIBLE | POINTER_ENABLED | VIEW_MATRIX_DIRTY;
         _localMatrix = new Matrix();
-
-        var dirtyMatrix = function (_,_) {
+        var dirtyMatrix = function(_, _) {
             _flags = _flags.add(LOCAL_MATRIX_DIRTY | VIEW_MATRIX_DIRTY);
         };
         x = new AnimatedFloat(0, dirtyMatrix);
@@ -119,18 +97,16 @@ class Sprite extends Component
         scaleY = new AnimatedFloat(1, dirtyMatrix);
         anchorX = new AnimatedFloat(0, dirtyMatrix);
         anchorY = new AnimatedFloat(0, dirtyMatrix);
-
         alpha = new AnimatedFloat(1);
-		sort = true;
+        sort = true;
     }
-
-    /**
+/**
      * Search for a sprite in the entity hierarchy lying under the given point, in local
      * coordinates. Ignores sprites that are invisible or not pointerEnabled during traversal.
      * Returns null if neither the entity or its children contain a sprite under the given point.
      */
-    public static function hitTest (entity :Entity, x :Float, y :Float) :Sprite
-    {
+
+    public static function hitTest(entity:Entity, x:Float, y:Float):Sprite {
         var sprite = entity.get(Sprite);
         if (sprite != null) {
             if (!sprite._flags.containsAll(VISIBLE | POINTER_ENABLED)) {
@@ -140,63 +116,55 @@ class Sprite extends Component
                 x = _scratchPoint.x;
                 y = _scratchPoint.y;
             }
-
             var scissor = sprite.scissor;
             if (scissor != null && !scissor.contains(x, y)) {
                 return null; // Prune if outside the scissor rectangle
             }
         }
-
-        // Hit test all children, front to back
+// Hit test all children, front to back
         var result = hitTestBackwards(entity.firstChild, x, y);
         if (result != null) {
             return result;
         }
-
-        // Finally, if we got this far, hit test the actual sprite
+// Finally, if we got this far, hit test the actual sprite
         return (sprite != null && sprite.containsLocal(x, y)) ? sprite : null;
     }
-
-    /**
+/**
      * Calculate the bounding box of an entity hierarchy. Returns the smallest rectangle in local
      * coordinates that fully encloses all child sprites.
      */
-    public static function getBounds (entity :Entity, ?result :Rectangle) :Rectangle
-    {
+
+    public static function getBounds(entity:Entity, ?result:Rectangle):Rectangle {
         if (result == null) {
             result = new Rectangle();
         }
-
-        // The width and height of this rectangle are hijacked to store the bottom right corner
+// The width and height of this rectangle are hijacked to store the bottom right corner
         result.set(FMath.FLOAT_MAX, FMath.FLOAT_MAX, FMath.FLOAT_MIN, FMath.FLOAT_MIN);
         getBoundsImpl(entity, null, result);
-
-        // Convert back to a true width and height
+// Convert back to a true width and height
         result.width -= result.x;
         result.height -= result.y;
         return result;
     }
 
-	
-	public function isOutScreen():Bool {
-		return false;//(this.x._+getNaturalWidth()<0||this.x._>System.stage.width||this.y._+getNaturalHeight()<0||this.y._>System.stage.height);
-	}
-    /**
+    public function isOutScreen():Bool {
+        return false;//(this.x._+getNaturalWidth()<0||this.x._>System.stage.width||this.y._+getNaturalHeight()<0||this.y._>System.stage.height);
+    }
+/**
      * Renders an entity hierarchy to the given Graphics.
      */
-    public static function render (entity :Entity, g :Graphics)
-    {
-        // Render this entity's sprite
+
+    public static function render(entity:Entity, g:Graphics) {
+// Render this entity's sprite
         var sprite = entity.get(Sprite);
         if (sprite != null) {
-			if (sprite.isOutScreen()) {
-			return;	
-			}
+            if (sprite.isOutScreen()) {
+                return;
+            }
             var alpha = sprite.alpha._;
             if (!sprite.visible || alpha <= 0) {
                 return; // Prune traversal, this sprite and all children are invisible
             }
-
             g.save();
             if (alpha < 1) {
                 g.multiplyAlpha(alpha);
@@ -206,16 +174,13 @@ class Sprite extends Component
             }
             var matrix = sprite.getLocalMatrix();
             g.transform(matrix.m00, matrix.m10, matrix.m01, matrix.m11, matrix.m02, matrix.m12);
-
             var scissor = sprite.scissor;
             if (scissor != null) {
                 g.applyScissor(scissor.x, scissor.y, scissor.width, scissor.height);
             }
-
             sprite.draw(g);
         }
-
-        // Render any partially occluded director scenes
+// Render any partially occluded director scenes
         var director = entity.get(Director);
         if (director != null) {
             var scenes = director.occludedScenes;
@@ -223,86 +188,74 @@ class Sprite extends Component
                 render(scene, g);
             }
         }
-
-        // Render all children
+// Render all children
         var p = entity.childList.head;
-		
-		
         while (p != null) {
             var next = p.next;
             render(p.val, g);
             p = next;
         }
-
-        // If save() was called, unwind it
+// If save() was called, unwind it
         if (sprite != null) {
             g.restore();
         }
     }
-
-    /**
+/**
      * The "natural" width of this sprite, without any transformations being applied. Used for hit
      * testing. This does not consider child sprites, use Sprite.getBounds for that.
      */
-    public function getNaturalWidth () :Float
-    {
+
+    public function getNaturalWidth():Float {
         return 0;
     }
-
-    /**
+/**
      * The "natural" height of this sprite, without any transformations being applied. Used for hit
      * testing. This does not consider child sprites, use Sprite.getBounds for that.
      */
-    public function getNaturalHeight () :Float
-    {
+
+    public function getNaturalHeight():Float {
         return 0;
     }
-
-    /**
+/**
      * Returns true if the given point (in viewport/stage coordinates) lies inside this sprite.
      */
-    public function contains (viewX :Float, viewY :Float) :Bool
-    {
-        return getViewMatrix().inverseTransform(viewX, viewY, _scratchPoint) &&
-            containsLocal(_scratchPoint.x, _scratchPoint.y);
-    }
 
-    /**
+    public function contains(viewX:Float, viewY:Float):Bool {
+        return getViewMatrix().inverseTransform(viewX, viewY, _scratchPoint) &&
+        containsLocal(_scratchPoint.x, _scratchPoint.y);
+    }
+/**
      * Returns true if the given point (in local coordinates) lies inside this sprite.
      */
-    public function containsLocal (localX :Float, localY :Float) :Bool
-    {
-        return localX >= 0 && localX < getNaturalWidth()
-            && localY >= 0 && localY < getNaturalHeight();
-    }
 
-    /**
+    public function containsLocal(localX:Float, localY:Float):Bool {
+        return localX >= 0 && localX < getNaturalWidth()
+        && localY >= 0 && localY < getNaturalHeight();
+    }
+/**
      * Returns the local transformation matrix, relative to the parent. This matrix may be modified
      * to position the sprite, but any changes will be invalidated when the x, y, scaleX, scaleY,
      * rotation, anchorX, or anchorY properties are updated.
      */
-    public function getLocalMatrix () :Matrix
-    {
+
+    public function getLocalMatrix():Matrix {
         if (_flags.contains(LOCAL_MATRIX_DIRTY)) {
             _flags = _flags.remove(LOCAL_MATRIX_DIRTY);
-
             _localMatrix.compose(x._, y._, scaleX._, scaleY._, FMath.toRadians(rotation._));
             _localMatrix.translate(-anchorX._, -anchorY._);
         }
         return _localMatrix;
     }
-
-    /**
+/**
      * Returns the view transformation matrix, relative to the root. Do NOT modify this matrix.
      */
-    public function getViewMatrix () :Matrix
-    {
+
+    public function getViewMatrix():Matrix {
         if (isViewMatrixDirty()) {
             var parentSprite = getParentSprite();
             _viewMatrix = (parentSprite != null)
-                ? Matrix.multiply(parentSprite.getViewMatrix(), getLocalMatrix(), _viewMatrix)
-                : getLocalMatrix().clone(_viewMatrix);
-
+            ? Matrix.multiply(parentSprite.getViewMatrix(), getLocalMatrix(), _viewMatrix)
+            : getLocalMatrix().clone(_viewMatrix);
             _flags = _flags.remove(VIEW_MATRIX_DIRTY);
             if (parentSprite != null) {
                 _parentViewMatrixUpdateCount = parentSprite._viewMatrixUpdateCount;
@@ -311,74 +264,67 @@ class Sprite extends Component
         }
         return _viewMatrix;
     }
-
-    /**
+/**
      * Convenience method to set the anchor position.
      * @returns This instance, for chaining.
      */
-    public function setAnchor (x :Float, y :Float) :Sprite
-    {
+
+    public function setAnchor(x:Float, y:Float):Sprite {
         anchorX._ = x;
         anchorY._ = y;
         return this;
     }
-
-    /**
+/**
      * Convenience method to center the anchor using the natural width and height.
      * @returns This instance, for chaining.
      */
-    public function centerAnchor () :Sprite
-    {
-        anchorX._ = getNaturalWidth()/2;
-        anchorY._ = getNaturalHeight()/2;
+
+    public function centerAnchor():Sprite {
+        anchorX._ = getNaturalWidth() / 2;
+        anchorY._ = getNaturalHeight() / 2;
         return this;
     }
-
-    /**
+/**
      * Convenience method to set the position.
      * @returns This instance, for chaining.
      */
-    public function setXY (x :Float, y :Float) :Sprite
-    {
+
+    public function setXY(x:Float, y:Float):Sprite {
         this.x._ = x;
         this.y._ = y;
         return this;
     }
-
-    /**
+/**
      * Convenience method to uniformly set the scale.
      * @returns This instance, for chaining.
      */
-    public function setScale (scale :Float) :Sprite
-    {
+
+    public function setScale(scale:Float):Sprite {
         scaleX._ = scale;
         scaleY._ = scale;
         return this;
     }
-
-    /**
+/**
      * Convenience method to set the scale.
      * @returns This instance, for chaining.
      */
-    public function setScaleXY (scaleX :Float, scaleY :Float) :Sprite
-    {
+
+    public function setScaleXY(scaleX:Float, scaleY:Float):Sprite {
         this.scaleX._ = scaleX;
         this.scaleY._ = scaleY;
         return this;
     }
-
-    /**
+/**
      * Convenience method to set pointerEnabled to false.
      * @returns This instance, for chaining.
      */
-    public function disablePointer () :Sprite
-    {
+
+    public function disablePointer():Sprite {
         pointerEnabled = false;
         return this;
     }
 
-    override public function onUpdate (dt :Float)
-    {
+    override public function onUpdate(dt:Float) {
         x.update(dt);
         y.update(dt);
         rotation.update(dt);
@@ -388,17 +334,15 @@ class Sprite extends Component
         anchorX.update(dt);
         anchorY.update(dt);
     }
-
-    /**
+/**
      * Draws this sprite to the given Graphics.
      */
-    public function draw (g :Graphics)
-    {
-        // See subclasses
+
+    public function draw(g:Graphics) {
+// See subclasses
     }
 
-    private function isViewMatrixDirty () :Bool
-    {
+    private function isViewMatrixDirty():Bool {
         if (_flags.contains(VIEW_MATRIX_DIRTY)) {
             return true;
         }
@@ -407,11 +351,10 @@ class Sprite extends Component
             return false;
         }
         return _parentViewMatrixUpdateCount != parentSprite._viewMatrixUpdateCount
-            || parentSprite.isViewMatrixDirty();
+        || parentSprite.isViewMatrixDirty();
     }
 
-    public function getParentSprite () :Sprite
-    {
+    public function getParentSprite():Sprite {
         if (owner == null) {
             return null;
         }
@@ -426,54 +369,46 @@ class Sprite extends Component
         return null;
     }
 
-    private function get_pointerDown () :Signal1<PointerEvent>
-    {
+    private function get_pointerDown():Signal1<PointerEvent> {
         if (_pointerDown == null) {
             _pointerDown = new Signal1();
         }
         return _pointerDown;
     }
 
-    private function get_pointerMove () :Signal1<PointerEvent>
-    {
+    private function get_pointerMove():Signal1<PointerEvent> {
         if (_pointerMove == null) {
             _pointerMove = new Signal1();
         }
         return _pointerMove;
     }
 
-    private function get_pointerUp () :Signal1<PointerEvent>
-    {
+    private function get_pointerUp():Signal1<PointerEvent> {
         if (_pointerUp == null) {
             _pointerUp = new Signal1();
         }
         return _pointerUp;
     }
 
-    inline private function get_visible () :Bool
-    {
+    inline private function get_visible():Bool {
         return _flags.contains(VISIBLE);
     }
 
-    private function set_visible (visible :Bool) :Bool
-    {
+    private function set_visible(visible:Bool):Bool {
         _flags = _flags.set(VISIBLE, visible);
         return visible;
     }
 
-    inline private function get_pointerEnabled () :Bool
-    {
+    inline private function get_pointerEnabled():Bool {
         return _flags.contains(POINTER_ENABLED);
     }
 
-    private function set_pointerEnabled (pointerEnabled :Bool) :Bool
-    {
+    private function set_pointerEnabled(pointerEnabled:Bool):Bool {
         _flags = _flags.set(POINTER_ENABLED, pointerEnabled);
         return pointerEnabled;
     }
 
-    private static function hitTestBackwards (entity :Entity, x :Float, y :Float)
-    {
+    private static function hitTestBackwards(entity:Entity, x:Float, y:Float) {
         if (entity != null) {
             var result = hitTestBackwards(entity.next, x, y);
             return (result != null) ? result : hitTest(entity, x, y);
@@ -481,28 +416,24 @@ class Sprite extends Component
         return null;
     }
 
-    private static function getBoundsImpl (entity :Entity, matrix :Matrix, result :Rectangle)
-    {
+    private static function getBoundsImpl(entity:Entity, matrix:Matrix, result:Rectangle) {
         var sprite = entity.get(Sprite);
         if (sprite != null) {
             matrix = (matrix != null)
-                ? Matrix.multiply(matrix, sprite.getLocalMatrix()) // Allocation!
-                : sprite.getLocalMatrix();
-
+            ? Matrix.multiply(matrix, sprite.getLocalMatrix()) // Allocation!
+            : sprite.getLocalMatrix();
             var x1 = 0.0, y1 = 0.0;
             var x2 = sprite.getNaturalWidth(), y2 = sprite.getNaturalHeight();
-
-            // Intersecting scissor rectangles are too tricky for bounds calculation, ignore it for
-            // now...
-            // var scissor = sprite.scissor;
-            // if (scissor != null) {
-            //     x1 = FMath.max(x1, scissor.x);
-            //     y1 = FMath.max(y1, scissor.y);
-            //     x2 = FMath.min(x2, scissor.x + scissor.width);
-            //     y2 = FMath.min(y2, scissor.y + scissor.height);
-            // }
-
-            // Extend the rectangle out to fit this sprite
+// Intersecting scissor rectangles are too tricky for bounds calculation, ignore it for
+// now...
+// var scissor = sprite.scissor;
+// if (scissor != null) {
+//     x1 = FMath.max(x1, scissor.x);
+//     y1 = FMath.max(y1, scissor.y);
+//     x2 = FMath.min(x2, scissor.x + scissor.width);
+//     y2 = FMath.min(y2, scissor.y + scissor.height);
+// }
+// Extend the rectangle out to fit this sprite
             if (x2 > x1 && y2 > y1) {
                 extendRect(matrix, x1, y1, result);
                 extendRect(matrix, x2, y1, result);
@@ -510,8 +441,7 @@ class Sprite extends Component
                 extendRect(matrix, x1, y2, result);
             }
         }
-
-        // Recurse into partially occluded director scenes
+// Recurse into partially occluded director scenes
         var director = entity.get(Director);
         if (director != null) {
             var scenes = director.occludedScenes;
@@ -521,8 +451,7 @@ class Sprite extends Component
                 ++ii;
             }
         }
-
-        // Recurse into all children
+// Recurse into all children
         var p = entity.childList.head;
         while (p != null) {
             var next = p.next;
@@ -531,39 +460,31 @@ class Sprite extends Component
         }
     }
 
-    private static function extendRect (matrix :Matrix, x :Float, y :Float, rect :Rectangle)
-    {
+    private static function extendRect(matrix:Matrix, x:Float, y:Float, rect:Rectangle) {
         var p = matrix.transform(x, y, _scratchPoint);
         x = p.x;
         y = p.y;
-
-        // The width and height of the rectangle are treated like the bottom right point, rather
-        // than a true width and height offset
+// The width and height of the rectangle are treated like the bottom right point, rather
+// than a true width and height offset
         if (x < rect.x) rect.x = x;
         if (y < rect.y) rect.y = y;
         if (x > rect.width) rect.width = x;
         if (y > rect.height) rect.height = y;
     }
-
     private static var _scratchPoint = new Point();
-
-    // Various flags used by Sprite and subclasses
+// Various flags used by Sprite and subclasses
     private static inline var VISIBLE = 1 << 0;
     private static inline var POINTER_ENABLED = 1 << 1;
     private static inline var LOCAL_MATRIX_DIRTY = 1 << 2;
     private static inline var VIEW_MATRIX_DIRTY = 1 << 3;
     private static inline var MOVIESPRITE_PAUSED = 1 << 4;
     private static inline var TEXTSPRITE_DIRTY = 1 << 5;
-
-    private var _flags :Int;
-
-    private var _localMatrix :Matrix;
-
-    private var _viewMatrix :Matrix = null;
-    private var _viewMatrixUpdateCount :Int = 0;
-    private var _parentViewMatrixUpdateCount :Int = 0;
-
-    @:allow(flambe) var _pointerDown :Signal1<PointerEvent>;
-    @:allow(flambe) var _pointerMove :Signal1<PointerEvent>;
-    @:allow(flambe) var _pointerUp :Signal1<PointerEvent>;
+    private var _flags:Int;
+    private var _localMatrix:Matrix;
+    private var _viewMatrix:Matrix = null;
+    private var _viewMatrixUpdateCount:Int = 0;
+    private var _parentViewMatrixUpdateCount:Int = 0;
+    @:allow(flambe) var _pointerDown:Signal1<PointerEvent>;
+    @:allow(flambe) var _pointerMove:Signal1<PointerEvent>;
+    @:allow(flambe) var _pointerUp:Signal1<PointerEvent>;
 }

@@ -1,10 +1,7 @@
 package flambe.display.tileSheet;
-
 import flambe.math.Point;
 import flambe.math.Rectangle;
-
 import flambe.display.tileSheet.Format;
-
 //
 // AnimPack holds a single texture tile sheet, and can have
 // multiple animation sequneces in it.
@@ -13,15 +10,12 @@ class AnimTextureSheet {
     public var name(get, never):String;
     public var maxRect(get, never):Rectangle;
     public var numFrames(get, never):Int;
-
     var mName:String;
     var mTextureRegions:Vector<Rectangle>;
     var mFrameOffsets:Vector<Point>;
-
     var mFrameRect:Rectangle;
 
     public function new() {
-
         mTextureRegions = new Vector<Rectangle>();
         mFrameRect = new Rectangle();
         mFrameOffsets = new Vector<Point>();
@@ -46,14 +40,10 @@ class AnimTextureSheet {
     public function get_frameHeight(fr:Int):Float {
         return (mTextureRegions[fr].height + mFrameOffsets[fr].y);
     }
-
-
     public var arFrameData:Array<FrameData>;
 
     public function init(arFrameData:Array<FrameData>):Void {
-
         this.arFrameData = arFrameData;
-
         var rcFrame:Rectangle;
         var regPt:Point;
         var i:Int = 0;
@@ -73,16 +63,12 @@ class AnimTextureSheet {
             i++;
         }
     }
-
 /* public function drawFrame(frame:Int, destBmp:BitmapData):Void {
         destBmp.copyPixels(mTextureSheet, mTextureRegions[frame], mFrameOffsets[frame]);
     }*/
 
     public function getFrameData(frame:Int):FrameData {
-
-
         return arFrameData[frame];
     }
-
 }
 

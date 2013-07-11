@@ -1,9 +1,7 @@
 //
 // Flambe - Rapid game development
 // https://github.com/aduros/flambe/blob/master/LICENSE.txt
-
 package flambe.platform;
-
 import de.polygonal.ds.DLLNode;
 import de.polygonal.ds.SLLNode;
 import de.polygonal.ds.SLL;
@@ -13,36 +11,29 @@ import flambe.Entity;
 import flambe.System;
 import flambe.display.Graphics;
 import flambe.display.Sprite;
-import flambe.scene.Director;
-
 using Lambda;
-
 /**
  * Updates all components and renders.
  */
-class MainLoop
-{
-    public function new ()
-    {
+class MainLoop {
+    public function new() {
         _tickables = [];
     }
 
-    public function update (dt :Float)
-    {
+    public function update(dt:Float) {
         if (dt <= 0) {
-            // This can happen on platforms that don't have monotonic timestamps and are prone to
-            // system clock adjustment
+// This can happen on platforms that don't have monotonic timestamps and are prone to
+// system clock adjustment
             Log.warn("Zero or negative time elapsed since the last frame!", ["dt", dt]);
             return;
         }
         if (dt > 1) {
-            // Clamp deltaTime to a reasonable limit. Games tend not to cope well with huge
-            // deltaTimes. Platforms should skip the next frame after unpausing to prevent sending
-            // huge deltaTimes, but not all environments support detecting an unpause
+// Clamp deltaTime to a reasonable limit. Games tend not to cope well with huge
+// deltaTimes. Platforms should skip the next frame after unpausing to prevent sending
+// huge deltaTimes, but not all environments support detecting an unpause
             dt = 1;
         }
-
-        // First update any tickables, folding away nulls
+// First update any tickables, folding away nulls
         var ii = 0;
         while (ii < _tickables.length) {
             var t = _tickables[ii];
@@ -52,14 +43,11 @@ class MainLoop
                 ++ii;
             }
         }
-
         System.volume.update(dt);
-
         updateEntity(System.root, dt);
     }
 
-    public function render (renderer :Renderer)
-    {
+    public function render(renderer:Renderer) {
         var graphics = renderer.willRender();
         if (graphics != null) {
             Sprite.render(System.root, graphics);
@@ -67,54 +55,45 @@ class MainLoop
         }
     }
 
-    public function addTickable (t :Tickable)
-    {
+    public function addTickable(t:Tickable) {
         _tickables.push(t);
     }
 
-    public function removeTickable (t :Tickable)
-    {
+    public function removeTickable(t:Tickable) {
         var idx = _tickables.indexOf(t);
         if (idx >= 0) {
-            // Actual removals only happen in update()
+// Actual removals only happen in update()
             _tickables[idx] = null;
         }
     }
 
-    private static function updateEntity (entity :Entity, dt :Float)
-    {
-        // Handle update speed adjustment
+    private static function updateEntity(entity:Entity, dt:Float) {
+// Handle update speed adjustment
         var speed = entity.get(SpeedAdjuster);
         if (speed != null) {
             speed._realDt = dt;
-
             dt *= speed.scale._;
             if (dt <= 0) {
-                // This entity is paused, avoid descending into children. But do update the speed
-                // adjuster (so it can still be animated)
+// This entity is paused, avoid descending into children. But do update the speed
+// adjuster (so it can still be animated)
                 speed.onUpdate(dt);
                 return;
             }
         }
-
-        // Update components
-        var p :DLLNode<Component> = cast entity.componentList.head;
-
+// Update components
+        var p:DLLNode<Component> = cast entity.componentList.head;
         while (p != null) {
             var next = p.next;
-
             p.val.onUpdate(dt);
             p = next;
         }
-
-        // Update children
-        var p :SLLNode<Entity>= entity.childList.head;
+// Update children
+        var p:SLLNode<Entity >= entity.childList.head;
         while (p != null) {
             var next = p.next;
             updateEntity(p.val, dt);
             p = next;
         }
     }
-
-    private var _tickables :Array<Tickable>;
+    private var _tickables:Array<Tickable>;
 }

@@ -137,6 +137,8 @@ private typedef VectorData<T> = Array<T>;
 #if !flash
 
 
+
+
     @:to public inline function toArray<T>():Array<T> {
         return this;
     }

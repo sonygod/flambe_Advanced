@@ -1,12 +1,9 @@
 package flambe.display.tileSheet;
-
-
 import flambe.display.tileSheet.Format;
 //
 // Helper VO for storing sequence data
 //
 class AnimSeqData {
-
 // String name of the animation sequence (e.g. "walk")
     public var seqName:String;
 // Seconds between frames (basically the framerate)
@@ -28,6 +25,5 @@ class AnimSeqData {
     function destroy():Void {
         arFrames = null;
     }
-
 }
 
